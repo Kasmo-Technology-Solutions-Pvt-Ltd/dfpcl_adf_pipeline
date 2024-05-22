@@ -1,9 +1,0 @@
-{
-	"name": "sap-test-repo",
-	"location": "eastus",
-	"identity": {
-		"type": "SystemAssigned",
-		"principalId": "a1823a28-0dae-4bec-b8be-38f41b77898a",
-		"tenantId": "979ffdff-332b-406c-8644-6d8db569225f"
-	}
-}
