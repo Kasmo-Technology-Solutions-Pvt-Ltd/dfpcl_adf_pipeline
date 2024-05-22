@@ -1,9 +1,0 @@
-{
-	"name": "SAP-DF-123",
-	"location": "southindia",
-	"identity": {
-		"type": "SystemAssigned",
-		"principalId": "79764704-1d98-4b1c-aa4c-cd2796428377",
-		"tenantId": "979ffdff-332b-406c-8644-6d8db569225f"
-	}
-}
