@@ -188,10 +188,6 @@
 											"secureInput": false
 										},
 										"userProperties": [],
-										"linkedServiceName": {
-											"referenceName": "sapfinal_integration",
-											"type": "LinkedServiceReference"
-										},
 										"typeProperties": {
 											"scripts": [
 												{
@@ -224,16 +220,12 @@
 											"secureInput": false
 										},
 										"userProperties": [],
-										"linkedServiceName": {
-											"referenceName": "sapfinal_integration",
-											"type": "LinkedServiceReference"
-										},
 										"typeProperties": {
 											"scripts": [
 												{
 													"type": "Query",
 													"text": {
-														"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.cntrl_tbl_alert_mail(\n    '@{item().sf_db}',\n    '@{item().sf_sch}',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().Schema}',\n    '@{item().table_name}',\n    '@{item().sf_tbl}',\n    'Failure',\n    '@{replace(activity('Full Load').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',0\n);\n",
+														"value": "CALL DFPCL_STG.DFPCL_PIPELINE.cntrl_tbl_alert_mail(\n    'DFPCL_POC',\n    'DFPCL_SAP',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().table_name}',\n    '@{item().table_name}',\n    'Failure',\n    '@{replace(activity('GETTABLE').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',\n    0\n);",
 														"type": "Expression"
 													}
 												}
@@ -333,10 +325,6 @@
 											"secureInput": false
 										},
 										"userProperties": [],
-										"linkedServiceName": {
-											"referenceName": "sapfinal_integration",
-											"type": "LinkedServiceReference"
-										},
 										"typeProperties": {
 											"scripts": [
 												{
@@ -369,16 +357,12 @@
 											"secureInput": false
 										},
 										"userProperties": [],
-										"linkedServiceName": {
-											"referenceName": "sapfinal_integration",
-											"type": "LinkedServiceReference"
-										},
 										"typeProperties": {
 											"scripts": [
 												{
 													"type": "Query",
 													"text": {
-														"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.cntrl_tbl_alert_mail(\n    '@{item().sf_db}',\n    '@{item().sf_sch}',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().Schema}',\n    '@{item().table_name}',\n    '@{item().sf_tbl}',\n    'Failure',\n    '@{replace(activity('Copy_Incremental').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',0\n);\n",
+														"value": "CALL DFPCL_STG.DFPCL_PIPELINE.cntrl_tbl_alert_mail(\n    'DFPCL_POC',\n    'DFPCL_SAP',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().table_name}',\n    '@{item().table_name}',\n    'Failure',\n    '@{replace(activity('GETTABLE').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',\n    0\n);",
 														"type": "Expression"
 													}
 												}
@@ -470,16 +454,12 @@
 					"secureInput": false
 				},
 				"userProperties": [],
-				"linkedServiceName": {
-					"referenceName": "sapfinal_integration",
-					"type": "LinkedServiceReference"
-				},
 				"typeProperties": {
 					"scripts": [
 						{
 							"type": "Query",
 							"text": {
-								"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.cntrl_tbl_alert_mail(\n    'DP_FERTILIZERS',\n    'DP_FERTI_SCH',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '',\n    '',\n    '',\n    '',\n    'Failure',\n    '@{replace(activity('GETTABLE').output.errors[0].Message,'''','')}',,\n    '0', \n    '0',\n    '@{utcNow()}',\n    '0'\n    );",
+								"value": "CALL DFPCL_STG.DFPCL_PIPELINE.cntrl_tbl_alert_mail(\n    'DFPCL_POC',\n    'DFPCL_SAP',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '',\n    '',\n    '',\n    'Failure',\n    '@{replace(activity('GETTABLE').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',\n    0\n);",
 								"type": "Expression"
 							}
 						}
