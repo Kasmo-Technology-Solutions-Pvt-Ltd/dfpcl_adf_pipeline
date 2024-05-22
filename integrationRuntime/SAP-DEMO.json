@@ -1,0 +1,6 @@
+{
+	"name": "SAP-DEMO",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

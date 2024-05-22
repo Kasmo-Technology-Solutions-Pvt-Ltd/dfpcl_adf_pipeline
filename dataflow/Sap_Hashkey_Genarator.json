@@ -1,0 +1,51 @@
+{
+	"name": "Sap_Hashkey_Genarator",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Blob_Par_Source_Sap",
+						"type": "DatasetReference"
+					},
+					"name": "BlobSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Final_parquet_File",
+						"type": "DatasetReference"
+					},
+					"name": "FinalParquetGen"
+				}
+			],
+			"transformations": [
+				{
+					"name": "HashkeyGen"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     filenamedemo as string",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> BlobSource",
+				"BlobSource derive(hashkey = sha2(256, columns())) ~> HashkeyGen",
+				"HashkeyGen sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     partitionFileNames:[($filenamedemo)],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> FinalParquetGen"
+			]
+		}
+	}
+}

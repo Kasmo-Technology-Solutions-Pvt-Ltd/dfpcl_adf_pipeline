@@ -1,0 +1,19 @@
+{
+	"name": "SapBw2",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapBw",
+		"typeProperties": {
+			"server": "BW2.theobald-software.com",
+			"systemNumber": "00",
+			"clientId": "800",
+			"userName": "user1",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJlZmM5OGQyNi03NWE3LTQzMTEtYWZkNi04ODdlNjY5MTcyN2YiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntime3",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

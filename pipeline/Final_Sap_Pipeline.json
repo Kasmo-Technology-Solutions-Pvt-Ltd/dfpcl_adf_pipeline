@@ -1,0 +1,527 @@
+{
+	"name": "Final_Sap_Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "GETTABLE",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "TIMESTAMP",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ExcelSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"dataset": {
+						"referenceName": "Sap_Config_File_Details",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "TIMESTAMP",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "DateTImeStamp",
+					"value": {
+						"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss:fff')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach",
+				"description": "Full and Incremental load",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "GETTABLE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GETTABLE').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "If_Is_incremental_Load_flag_copy1",
+							"description": "if is_incremental_load is true then incremental load and false then full load. ",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "Is_incremental_load",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@bool(variables('Variable_Is_Incremental_Load'))",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Full Load",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SqlServerSource",
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": true,
+											"stagingSettings": {
+												"linkedServiceName": {
+													"referenceName": "LS_AZURE_BLOB",
+													"type": "LinkedServiceReference"
+												}
+											},
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "Sap_Sql_Sever_Local",
+												"type": "DatasetReference",
+												"parameters": {
+													"Schema": {
+														"value": "@item().Schema",
+														"type": "Expression"
+													},
+													"table_name": {
+														"value": "@item().table_name",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "Sap_Sink_Blob_Storage",
+												"type": "DatasetReference",
+												"parameters": {
+													"FILENAME": {
+														"value": "@concat(item().table_name,'_',variables('DateTImeStamp'),'.parquet')",
+														"type": "Expression"
+													},
+													"FolderName": {
+														"value": "@concat(item().data_base,'/',item().Schema,'/',item().table_name,'/')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "Full_Load_Success_Notification",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "Full Load",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "sapfinal_integration",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.data_load_sf(\n    '@{item().sf_db}',\n    '@{item().sf_sch}',\n    '@{item().sf_ext_sch}',\n    '@{item().sf_tbl}',\n    '@{item().pk_cols}',\n    '@{item().insrt_time_col}',\n    '@{item().updt_time_col}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().Schema}',\n    '@{item().table_name}',\n    '@{utcNow()}'\n);",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									},
+									{
+										"name": "Full_Load_Failure_Notification",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "Full Load",
+												"dependencyConditions": [
+													"Failed"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "sapfinal_integration",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.cntrl_tbl_alert_mail(\n    '@{item().sf_db}',\n    '@{item().sf_sch}',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().Schema}',\n    '@{item().table_name}',\n    '@{item().sf_tbl}',\n    'Failure',\n    '@{replace(activity('Full Load').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',0\n);\n",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Copy_Incremental",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "UpdateTime",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SqlServerSource",
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "Sap_Sql_Sever_Local",
+												"type": "DatasetReference",
+												"parameters": {
+													"Schema": "@item().Schema",
+													"table_name": {
+														"value": "@item().table_name",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "Sap_Sink_Blob_Storage",
+												"type": "DatasetReference",
+												"parameters": {
+													"FILENAME": {
+														"value": "@concat(item().table_name,'_',variables('DateTImeStamp'),'.parquet')",
+														"type": "Expression"
+													},
+													"FolderName": {
+														"value": "@concat(item().data_base,'/',item().Schema,'/',item().table_name,'/')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "UpdateTime",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SqlServerSource",
+												"sqlReaderQuery": {
+													"value": "SELECT MAX(ModifiedDate) AS MaxUpdateTime \nFROM @{item().Schema}.@{item().table_name}",
+													"type": "Expression"
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"dataset": {
+												"referenceName": "Sap_Sql_Sever_Local",
+												"type": "DatasetReference",
+												"parameters": {
+													"Schema": {
+														"value": "@item().Schema",
+														"type": "Expression"
+													},
+													"table_name": {
+														"value": "@item().table_name",
+														"type": "Expression"
+													}
+												}
+											},
+											"firstRowOnly": true
+										}
+									},
+									{
+										"name": "Incremental_Success_Notification",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "Copy_Incremental",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "sapfinal_integration",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.data_load_sf(\n    '@{item().sf_db}',\n    '@{item().sf_sch}',\n    '@{item().sf_ext_sch}',\n    '@{item().sf_tbl}',\n    '@{item().pk_cols}',\n    '@{item().insrt_time_col}',\n    '@{item().updt_time_col}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().Schema}',\n    '@{item().table_name}',\n    '@{utcNow()}'\n);",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									},
+									{
+										"name": "Incremental_Failure_Notification",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "Copy_Incremental",
+												"dependencyConditions": [
+													"Failed"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "sapfinal_integration",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.cntrl_tbl_alert_mail(\n    '@{item().sf_db}',\n    '@{item().sf_sch}',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '@{item().data_base}',\n    '@{item().Schema}',\n    '@{item().table_name}',\n    '@{item().sf_tbl}',\n    'Failure',\n    '@{replace(activity('Copy_Incremental').output.errors[0].Message,'''','')}',\n    0, 0,\n    '@{utcNow()}',0\n);\n",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "Is_incremental_load",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "Variable_Is_Incremental_Load",
+								"value": {
+									"value": "@item().Is_incremental_load",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "LookUpFailureNotification",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "GETTABLE",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "sapfinal_integration",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "CALL DP_FERTILIZERS.DP_FERTI_SCH.cntrl_tbl_alert_mail(\n    'DP_FERTILIZERS',\n    'DP_FERTI_SCH',\n    '@{pipeline().TriggerTime}',\n    '@{utcNow()}',\n    '',\n    '',\n    '',\n    '',\n    'Failure',\n    '@{replace(activity('GETTABLE').output.errors[0].Message,'''','')}',,\n    '0', \n    '0',\n    '@{utcNow()}',\n    '0'\n    );",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"variables": {
+			"DateTImeStamp": {
+				"type": "String"
+			},
+			"Variable_Is_Incremental_Load": {
+				"type": "String"
+			},
+			"MaxUpdateTime": {
+				"type": "String"
+			},
+			"Error": {
+				"type": "String"
+			},
+			"Get_Error_Message": {
+				"type": "String"
+			},
+			"filenmae": {
+				"type": "String"
+			},
+			"filetest": {
+				"type": "String"
+			},
+			"folder": {
+				"type": "String"
+			},
+			"captureError": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Insurance Analytics"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-05-20T12:40:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,228 @@
+{
+	"name": "Testing_sap",
+	"properties": {
+		"activities": [
+			{
+				"name": "GETTABLE",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "TIMESTAMP",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ExcelSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"dataset": {
+						"referenceName": "Sap_Config_File_Details",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach",
+				"description": "Full and Incremental load",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "GETTABLE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GETTABLE').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Full Load",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "LS_AZURE_BLOB",
+										"type": "LinkedServiceReference"
+									}
+								},
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Sap_Sql_Sever_Local",
+									"type": "DatasetReference",
+									"parameters": {
+										"Schema": {
+											"value": "@item().table_name",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@item().table_name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Blob_Par_Source_Sap",
+									"type": "DatasetReference",
+									"parameters": {
+										"sapfile1": {
+											"value": "@item().table_name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Data flow1",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "Full Load",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "Sap_Hashkey_Genarator",
+									"type": "DataFlowReference",
+									"parameters": {
+										"filenamedemo": "hashkey"
+									},
+									"datasetParameters": {
+										"BlobSource": {
+											"sapfile1": {
+												"value": "@variables('filenmae')",
+												"type": "Expression"
+											}
+										},
+										"FinalParquetGen": {
+											"file": {
+												"value": "@variables('filenmae')",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 16,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "TIMESTAMP",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "DateTImeStamp",
+					"value": {
+						"value": "@formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss:fff')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"DateTImeStamp": {
+				"type": "String"
+			},
+			"Variable_Is_Incremental_Load": {
+				"type": "Boolean"
+			},
+			"MaxUpdateTime": {
+				"type": "String"
+			},
+			"Error": {
+				"type": "String"
+			},
+			"Get_Error_Message": {
+				"type": "String"
+			},
+			"filenmae": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Insurance Analytics"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-05-20T12:40:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

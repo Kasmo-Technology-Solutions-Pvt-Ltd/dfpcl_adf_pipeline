@@ -1,0 +1,19 @@
+{
+	"name": "Binary1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "FtpServer1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "FtpServerLocation",
+				"fileName": "Camera Vorne_01_20240516110243.jpg",
+				"folderPath": "Vorne/2024/05/16"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

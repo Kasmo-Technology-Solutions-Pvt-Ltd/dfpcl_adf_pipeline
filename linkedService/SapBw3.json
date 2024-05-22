@@ -1,0 +1,19 @@
+{
+	"name": "SapBw3",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapBw",
+		"typeProperties": {
+			"server": "VISUINFOEHP6",
+			"systemNumber": "66",
+			"clientId": "800",
+			"userName": "sapuser",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIwODYyNGFmYS1mMGMyLTQ1ZjctODAzNS1kNjdmNmRkYmFhYmEiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "SAP-DEMO",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "SapOpenHub1",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapOpenHub",
+		"typeProperties": {
+			"clientId": "800",
+			"language": "EN",
+			"userName": "user1",
+			"server": "BW2.theobald-software.com",
+			"systemNumber": "00",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIzYmZjMTFiNS02ZDM0LTRmOTQtYmZkZi1kNzIxZDM3NGI2YmIiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntime3",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

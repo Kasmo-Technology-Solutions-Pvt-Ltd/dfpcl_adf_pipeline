@@ -1,0 +1,20 @@
+{
+	"name": "SapHana1",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapHana",
+		"typeProperties": {
+			"connectionString": "SERVERNODE=VISUINFOEHP6",
+			"userName": "sapuser",
+			"password": {
+				"type": "SecureString",
+				"value": "**********"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SAP-DEMO",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

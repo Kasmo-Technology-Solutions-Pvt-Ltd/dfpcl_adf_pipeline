@@ -1,0 +1,22 @@
+{
+	"name": "SapOdp3",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapOdp",
+		"typeProperties": {
+			"clientId": "800",
+			"language": "EN",
+			"sncMode": false,
+			"userName": "user1",
+			"subscriberName": "0SD_C03$F",
+			"server": "BW2.theobald-software.com",
+			"systemNumber": "00",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI1YzU4ZjM2Zi1iOTVjLTQ3OTktOWUzZi00MjcyYTM4MWI4MTYiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntime3",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
