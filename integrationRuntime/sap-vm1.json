@@ -1,6 +1,0 @@
-{
-	"name": "sap-vm1",
-	"properties": {
-		"type": "SelfHosted"
-	}
-}
